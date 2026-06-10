@@ -1,0 +1,161 @@
+// Data model for the supplement-ordering vertical slice.
+//
+// Money conventions:
+//   - Every money column is integer cents (Int). Floats never touch money.
+//   - Prices and COGS are SNAPSHOTTED onto OrderLine at order time; the
+//     catalog can drift, the split at point of sale cannot.
+//   - The split per line satisfies, exactly:
+//       cogsCents + marginCents + feeCents == totalCents
+//   - LedgerPosting rows are only written when a payment succeeds, in the
+//     same transaction as the status flip — a paid order ALWAYS has a
+//     complete ledger; an unpaid order NEVER has one.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderStatus {
+  AWAITING_PAYMENT
+  PAID
+  CANCELED
+}
+
+enum PaymentStatus {
+  SUCCEEDED
+  DECLINED
+}
+
+enum PostingParty {
+  PLATFORM
+  PROVIDER
+}
+
+enum PostingReason {
+  COGS
+  PLATFORM_FEE
+  PROVIDER_MARGIN
+}
+
+enum MovementReason {
+  INITIAL
+  SALE
+  RESTOCK
+  ADJUSTMENT
+}
+
+/// Catalog item. `wholesaleCents` is our COGS; `defaultPriceCents` is the
+/// suggested patient price the provider can override per order line.
+model Supplement {
+  id                String              @id @default(cuid())
+  name              String
+  description       String?
+  wholesaleCents    Int
+  defaultPriceCents Int
+  active            Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  lines             OrderLine[]
+  movements         InventoryMovement[]
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  status       OrderStatus @default(AWAITING_PAYMENT)
+  providerName String
+  patientName  String
+
+  /// Order-level rollups of the line splits (denormalized for display;
+  /// the per-line values are the source of truth).
+  totalCents  Int
+  cogsCents   Int
+  feeCents    Int
+  marginCents Int
+
+  createdAt DateTime  @default(now())
+  paidAt    DateTime?
+
+  lines     OrderLine[]
+  payments  PaymentAttempt[]
+  postings  LedgerPosting[]
+  movements InventoryMovement[]
+}
+
+/// One catalog item on an order. Price and COGS are snapshots taken when
+/// the order was assembled; the split columns are computed from those
+/// snapshots and are immutable.
+model OrderLine {
+  id           String @id @default(cuid())
+  orderId      String
+  supplementId String
+  quantity     Int
+
+  unitPriceCents Int
+  unitCogsCents  Int
+
+  totalCents  Int
+  cogsCents   Int
+  feeCents    Int
+  marginCents Int
+
+  order      Order           @relation(fields: [orderId], references: [id])
+  supplement Supplement      @relation(fields: [supplementId], references: [id])
+  postings   LedgerPosting[]
+
+  @@index([orderId])
+}
+
+/// Every payment attempt is recorded, including declines — part of the
+/// audit trail. At most one attempt per order ever SUCCEEDED (enforced in
+/// the payment transaction, which re-checks order status under lock).
+model PaymentAttempt {
+  id            String        @id @default(cuid())
+  orderId       String
+  amountCents   Int
+  status        PaymentStatus
+  cardLast4     String
+  failureReason String?
+  createdAt     DateTime      @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+}
+
+/// The audit ledger: where every cent of a paid order went. Three postings
+/// per order line (COGS → platform, fee → platform, margin → provider).
+/// Sum of postings for an order == amount the patient paid, exactly.
+model LedgerPosting {
+  id          String        @id @default(cuid())
+  orderId     String
+  orderLineId String
+  party       PostingParty
+  reason      PostingReason
+  amountCents Int
+  createdAt   DateTime      @default(now())
+
+  order Order     @relation(fields: [orderId], references: [id])
+  line  OrderLine @relation(fields: [orderLineId], references: [id])
+
+  @@index([orderId])
+}
+
+/// Inventory as an append-only movement log; stock on hand is the sum of
+/// deltas. SALE movements are written in the payment transaction.
+model InventoryMovement {
+  id           String         @id @default(cuid())
+  supplementId String
+  delta        Int
+  reason       MovementReason
+  orderId      String?
+  note         String?
+  createdAt    DateTime       @default(now())
+
+  supplement Supplement @relation(fields: [supplementId], references: [id])
+  order      Order?     @relation(fields: [orderId], references: [id])
+
+  @@index([supplementId])
+}
