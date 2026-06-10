@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:seed": "esbuild prisma/seed.ts --bundle --platform=node --format=esm --packages=external --outfile=.tmp/seed.mjs --log-level=warning && node .tmp/seed.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
@@ -29,6 +30,7 @@
     "eslint": "^9.39.4",
     "eslint-config-next": "^16.2.9",
     "prisma": "^7.8.0",
+    "server-only": "^0.0.1",
     "tailwindcss": "^4.3.0",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",

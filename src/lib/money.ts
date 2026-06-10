@@ -139,6 +139,19 @@ export function priceForTargetMargin(
   return { unitPriceCents: price, realizedMarginCents };
 }
 
+/**
+ * Parse a user-entered dollar string ("29", "29.5", "29.50") into integer
+ * cents. Returns null on anything that isn't a clean, non-negative dollar
+ * amount with at most two decimals.
+ */
+export function parseDollarsToCents(input: string): number | null {
+  const trimmed = input.trim().replace(/^\$/, "").replace(/,/g, "");
+  if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) return null;
+  const [whole, frac = ""] = trimmed.split(".");
+  const cents = Number(whole) * 100 + Number(frac.padEnd(2, "0") || "0");
+  return Number.isSafeInteger(cents) ? cents : null;
+}
+
 /** Format integer cents as a dollar string, e.g. 123456 → "$1,234.56". */
 export function formatCents(cents: number): string {
   const sign = cents < 0 ? "-" : "";
