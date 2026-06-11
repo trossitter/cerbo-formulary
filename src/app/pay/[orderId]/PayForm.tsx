@@ -1,9 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { CheckCircle2, CreditCard, XCircle } from "lucide-react";
 import { payOrderAction, type PayState } from "@/app/actions";
 
 const initialState: PayState = { status: "idle" };
+const successCard = "4242424242424242";
+const declineCard = "4000000000000002";
 
 export function PayForm({
   orderId,
@@ -12,6 +15,7 @@ export function PayForm({
   orderId: string;
   amountLabel: string;
 }) {
+  const [cardNumber, setCardNumber] = useState("");
   const [state, formAction, isPending] = useActionState(
     payOrderAction.bind(null, orderId),
     initialState,
@@ -19,49 +23,70 @@ export function PayForm({
 
   if (state.status === "paid" || state.status === "already_paid") {
     return (
-      <div className="rounded-lg bg-emerald-50 p-4 text-sm text-emerald-800">
-        Payment of {amountLabel} succeeded — thank you! A receipt has been
+      <div className="success-panel p-4 text-sm font-semibold">
+        Payment of {amountLabel} succeeded - thank you! A receipt has been
         (pretend) emailed to you.
       </div>
     );
   }
 
   return (
-    <form action={formAction} className="space-y-4 rounded-lg border border-stone-200 bg-white p-4">
+    <form action={formAction} className="brand-card space-y-5 p-5">
       <label className="block text-sm">
-        <span className="text-stone-600">Card number</span>
+        <span className="label-copy">Card number</span>
         <input
           name="cardNumber"
           inputMode="numeric"
           autoComplete="cc-number"
           placeholder="4242 4242 4242 4242"
           required
-          className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2 font-mono"
+          value={cardNumber}
+          onChange={(e) => setCardNumber(e.target.value)}
+          className="brand-input mt-2 block w-full px-3 py-3 font-mono text-base"
         />
       </label>
 
+      <div className="grid gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => setCardNumber(successCard)}
+          className="btn-secondary px-3 py-2 text-sm"
+        >
+          <CheckCircle2 size={16} strokeWidth={2.4} aria-hidden="true" />
+          Use success card
+        </button>
+        <button
+          type="button"
+          onClick={() => setCardNumber(declineCard)}
+          className="btn-secondary px-3 py-2 text-sm"
+        >
+          <XCircle size={16} strokeWidth={2.4} aria-hidden="true" />
+          Use decline card
+        </button>
+      </div>
+
       <div className="grid grid-cols-2 gap-3">
         <label className="block text-sm">
-          <span className="text-stone-600">Expiry</span>
+          <span className="label-copy">Expiry</span>
           <input
             autoComplete="cc-exp"
             placeholder="12/29"
-            className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2"
+            className="brand-input mt-2 block w-full px-3 py-3"
           />
         </label>
         <label className="block text-sm">
-          <span className="text-stone-600">CVC</span>
+          <span className="label-copy">CVC</span>
           <input
             autoComplete="cc-csc"
             placeholder="123"
-            className="mt-1 block w-full rounded-md border border-stone-300 px-3 py-2"
+            className="brand-input mt-2 block w-full px-3 py-3"
           />
         </label>
       </div>
 
       {state.status === "declined" && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-          Your card was declined ({state.reason}). No charge was made — you can
+        <p className="error-panel px-3 py-2 text-sm font-semibold">
+          Your card was declined ({state.reason}). No charge was made - you can
           try a different card.
         </p>
       )}
@@ -69,13 +94,14 @@ export function PayForm({
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-md bg-emerald-700 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-600 disabled:bg-stone-300"
+        className="btn-primary w-full px-4 py-3 text-sm"
       >
-        {isPending ? "Processing…" : `Pay ${amountLabel}`}
+        <CreditCard size={17} strokeWidth={2.4} aria-hidden="true" />
+        {isPending ? "Processing..." : `Pay ${amountLabel}`}
       </button>
 
-      <p className="text-xs text-stone-400">
-        Stubbed payment — no real money moves. Use 4242 4242 4242 4242 to
+      <p className="text-sm text-[var(--cerbo-muted)]">
+        Stubbed payment - no real money moves. Use 4242 4242 4242 4242 to
         succeed, 4000 0000 0000 0002 to be declined.
       </p>
     </form>

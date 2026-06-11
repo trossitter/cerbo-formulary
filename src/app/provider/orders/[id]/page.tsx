@@ -24,78 +24,88 @@ export default async function OrderDetail({
 
   const postingSum = order.postings.reduce((s, p) => s + p.amountCents, 0);
   const paidAttempt = order.payments.find((p) => p.status === "SUCCEEDED");
+  const isPaid = order.status === "PAID";
 
   return (
     <div className="space-y-8">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="text-sm text-stone-500">
-            <Link href="/provider" className="hover:underline">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <div className="space-y-3">
+          <div className="text-sm font-medium text-[var(--cerbo-muted)]">
+            <Link href="/provider" className="text-[var(--cerbo-blue)] hover:underline">
               Dashboard
             </Link>{" "}
             / order <span className="font-mono">{order.id.slice(-8)}</span>
           </div>
-          <h1 className="mt-1 text-xl font-semibold text-stone-900">
+          <h1 className="serif-heading page-title">
             Order for {order.patientName}
           </h1>
-          <p className="text-sm text-stone-500">
-            {order.status === "PAID" && order.paidAt
+          <div className="flex flex-wrap items-center gap-3">
+            <span
+              className={`status-pill ${
+                isPaid
+                  ? "bg-[#ecfdf3] text-[#067647]"
+                  : "bg-[#fffaeb] text-[#b54708]"
+              }`}
+            >
+              {order.status.replaceAll("_", " ").toLowerCase()}
+            </span>
+            <p className="text-sm text-[var(--cerbo-muted)]">
+              {isPaid && order.paidAt
               ? `Paid ${order.paidAt.toLocaleString()}`
-              : `Created ${order.createdAt.toLocaleString()} — awaiting payment`}
-          </p>
+                : `Created ${order.createdAt.toLocaleString()} - awaiting payment`}
+            </p>
+          </div>
         </div>
         {order.status === "AWAITING_PAYMENT" && (
           <CopyLinkButton path={`/pay/${order.id}`} />
         )}
       </div>
 
-      <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-stone-500">
-          Lines (price &amp; cost snapshotted at order time)
-        </h2>
-        <div className="overflow-hidden rounded-lg border border-stone-200 bg-white">
-          <table className="w-full text-sm">
-            <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
+      <section className="space-y-3">
+        <h2 className="section-label">Lines (price &amp; cost snapshotted at order time)</h2>
+        <div className="brand-card overflow-x-auto">
+          <table className="brand-table min-w-[880px]">
+            <thead>
               <tr>
-                <th className="px-4 py-2">Supplement</th>
-                <th className="px-4 py-2 text-right">Qty</th>
-                <th className="px-4 py-2 text-right">Unit price</th>
-                <th className="px-4 py-2 text-right">Line total</th>
-                <th className="px-4 py-2 text-right">COGS</th>
-                <th className="px-4 py-2 text-right">Fee</th>
-                <th className="px-4 py-2 text-right">Margin</th>
+                <th>Supplement</th>
+                <th className="text-right">Qty</th>
+                <th className="text-right">Unit price</th>
+                <th className="text-right">Line total</th>
+                <th className="text-right">COGS</th>
+                <th className="text-right">Fee</th>
+                <th className="text-right">Margin</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-100">
+            <tbody>
               {order.lines.map((line) => (
                 <tr key={line.id}>
-                  <td className="px-4 py-2 font-medium text-stone-800">
+                  <td className="font-bold text-[var(--cerbo-navy)]">
                     {line.supplement.name}
                   </td>
-                  <td className="px-4 py-2 text-right">{line.quantity}</td>
-                  <td className="px-4 py-2 text-right">{formatCents(line.unitPriceCents)}</td>
-                  <td className="px-4 py-2 text-right">{formatCents(line.totalCents)}</td>
-                  <td className="px-4 py-2 text-right text-stone-600">
+                  <td className="text-right">{line.quantity}</td>
+                  <td className="text-right">{formatCents(line.unitPriceCents)}</td>
+                  <td className="text-right">{formatCents(line.totalCents)}</td>
+                  <td className="text-right text-[var(--cerbo-muted)]">
                     {formatCents(line.cogsCents)}
                   </td>
-                  <td className="px-4 py-2 text-right text-stone-600">
+                  <td className="text-right text-[var(--cerbo-muted)]">
                     {formatCents(line.feeCents)}
                   </td>
-                  <td className="px-4 py-2 text-right text-emerald-700">
+                  <td className="text-right font-bold text-[#067647]">
                     {formatCents(line.marginCents)}
                   </td>
                 </tr>
               ))}
             </tbody>
-            <tfoot className="bg-stone-50 font-medium">
+            <tfoot>
               <tr>
-                <td className="px-4 py-2">Total</td>
+                <td>Total</td>
                 <td />
                 <td />
-                <td className="px-4 py-2 text-right">{formatCents(order.totalCents)}</td>
-                <td className="px-4 py-2 text-right">{formatCents(order.cogsCents)}</td>
-                <td className="px-4 py-2 text-right">{formatCents(order.feeCents)}</td>
-                <td className="px-4 py-2 text-right text-emerald-700">
+                <td className="text-right">{formatCents(order.totalCents)}</td>
+                <td className="text-right">{formatCents(order.cogsCents)}</td>
+                <td className="text-right">{formatCents(order.feeCents)}</td>
+                <td className="text-right text-[#067647]">
                   {formatCents(order.marginCents)}
                 </td>
               </tr>
@@ -104,83 +114,81 @@ export default async function OrderDetail({
         </div>
       </section>
 
-      <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-stone-500">
-          Ledger — where every cent went
-        </h2>
+      <section className="space-y-3">
+        <h2 className="section-label">Ledger - where every cent went</h2>
         {order.postings.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-stone-300 bg-white p-6 text-sm text-stone-500">
-            No ledger entries. Postings are written only when payment succeeds —
+          <p className="brand-card border-dashed p-6 text-sm text-[var(--cerbo-muted)]">
+            No ledger entries. Postings are written only when payment succeeds -
             an unpaid order has no money movement to account for.
           </p>
         ) : (
           <>
-            <div className="overflow-hidden rounded-lg border border-stone-200 bg-white">
-              <table className="w-full text-sm">
-                <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
+            <div className="brand-card overflow-x-auto">
+              <table className="brand-table min-w-[760px]">
+                <thead>
                   <tr>
-                    <th className="px-4 py-2">Line</th>
-                    <th className="px-4 py-2">Party</th>
-                    <th className="px-4 py-2">Reason</th>
-                    <th className="px-4 py-2 text-right">Amount</th>
+                    <th>Line</th>
+                    <th>Party</th>
+                    <th>Reason</th>
+                    <th className="text-right">Amount</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-100">
+                <tbody>
                   {order.postings.map((p) => (
                     <tr key={p.id}>
-                      <td className="px-4 py-2 text-stone-600">
+                      <td className="text-[var(--cerbo-muted)]">
                         {p.line.supplement.name}
                       </td>
-                      <td className="px-4 py-2">{p.party.toLowerCase()}</td>
-                      <td className="px-4 py-2">
+                      <td>{p.party.toLowerCase()}</td>
+                      <td>
                         {p.reason.replaceAll("_", " ").toLowerCase()}
                       </td>
-                      <td className="px-4 py-2 text-right">{formatCents(p.amountCents)}</td>
+                      <td className="text-right">{formatCents(p.amountCents)}</td>
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className="bg-stone-50 font-medium">
+                <tfoot>
                   <tr>
-                    <td className="px-4 py-2" colSpan={3}>
+                    <td colSpan={3}>
                       Sum of postings
                     </td>
-                    <td className="px-4 py-2 text-right">{formatCents(postingSum)}</td>
+                    <td className="text-right">{formatCents(postingSum)}</td>
                   </tr>
                 </tfoot>
               </table>
             </div>
             <p
-              className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-medium ${
+              className={`status-pill ${
                 postingSum === order.totalCents
-                  ? "bg-emerald-100 text-emerald-800"
-                  : "bg-red-100 text-red-800"
+                  ? "bg-[#ecfdf3] text-[#067647]"
+                  : "bg-[#fef3f2] text-[#b42318]"
               }`}
             >
               {postingSum === order.totalCents
-                ? `✓ Postings sum exactly to the ${formatCents(order.totalCents)} the patient paid`
-                : `✗ INVARIANT VIOLATION: postings ${formatCents(postingSum)} ≠ paid ${formatCents(order.totalCents)}`}
+                ? `OK: Postings sum exactly to the ${formatCents(order.totalCents)} the patient paid`
+                : `INVARIANT VIOLATION: postings ${formatCents(postingSum)} do not equal paid ${formatCents(order.totalCents)}`}
             </p>
           </>
         )}
       </section>
 
-      <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-stone-500">
-          Payment attempts
-        </h2>
+      <section className="space-y-3">
+        <h2 className="section-label">Payment attempts</h2>
         {order.payments.length === 0 ? (
-          <p className="text-sm text-stone-500">None yet.</p>
+          <p className="text-sm text-[var(--cerbo-muted)]">None yet.</p>
         ) : (
-          <ul className="space-y-1 text-sm">
+          <ul className="brand-card divide-y divide-[var(--cerbo-soft-border)] text-sm">
             {order.payments.map((p) => (
-              <li key={p.id} className="text-stone-600">
-                {p.createdAt.toLocaleString()} — card ····{p.cardLast4} —{" "}
+              <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 p-4 text-[var(--cerbo-ink)]">
+                <span>
+                  {p.createdAt.toLocaleString()} - card ****{p.cardLast4}
+                </span>
                 {p.status === "SUCCEEDED" ? (
-                  <span className="font-medium text-emerald-700">
+                  <span className="font-bold text-[#067647]">
                     succeeded ({formatCents(p.amountCents)})
                   </span>
                 ) : (
-                  <span className="font-medium text-red-600">
+                  <span className="font-bold text-red-600">
                     declined ({p.failureReason})
                   </span>
                 )}
@@ -189,7 +197,7 @@ export default async function OrderDetail({
           </ul>
         )}
         {paidAttempt && (
-          <p className="mt-3 text-xs text-stone-400">
+          <p className="text-sm text-[var(--cerbo-muted)]">
             Money flow: patient paid the platform {formatCents(paidAttempt.amountCents)};
             the platform retains COGS + fee and owes the provider{" "}
             {formatCents(order.marginCents)} via the (stubbed) payout leg.

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { Send } from "lucide-react";
 import {
   computeLineSplit,
   formatCents,
@@ -117,74 +118,83 @@ export function OrderBuilder({
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-stone-900">New supplement order</h1>
+    <div className="space-y-7">
+      <div className="grid gap-5 lg:grid-cols-[1.4fr_0.8fr] lg:items-end">
+        <div className="space-y-3">
+          <p className="section-label">Provider order builder</p>
+          <h1 className="serif-heading page-title">New supplement order</h1>
+          <p className="page-subtitle">
+            Set quantities and patient-facing prices while the platform fee,
+            COGS, and provider margin update from integer cents in real time.
+          </p>
+        </div>
 
-      <label className="block text-sm">
-        <span className="text-stone-600">Patient</span>
-        <select
-          value={patient}
-          onChange={(e) => setPatient(e.target.value)}
-          className="mt-1 block w-64 rounded-md border border-stone-300 bg-white px-2 py-1.5"
-        >
-          {patients.map((p) => (
-            <option key={p}>{p}</option>
-          ))}
-        </select>
-      </label>
+        <label className="brand-card block p-5 text-sm">
+          <span className="label-copy">Patient</span>
+          <select
+            value={patient}
+            onChange={(e) => setPatient(e.target.value)}
+            className="brand-input mt-2 block w-full px-3 py-2"
+          >
+            {patients.map((p) => (
+              <option key={p}>{p}</option>
+            ))}
+          </select>
+        </label>
+      </div>
 
-      <div className="overflow-hidden rounded-lg border border-stone-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
+      <div className="brand-card overflow-x-auto">
+        <table className="brand-table min-w-[880px]">
+          <thead>
             <tr>
-              <th className="px-4 py-2">Supplement</th>
-              <th className="px-4 py-2 text-right">Cost (COGS)</th>
-              <th className="px-4 py-2 text-right">Stock</th>
-              <th className="px-4 py-2 text-right">Qty</th>
-              <th className="px-4 py-2 text-right">Patient price</th>
-              <th className="px-4 py-2 text-right">Fee (75 bps)</th>
-              <th className="px-4 py-2 text-right">Your margin</th>
+              <th>Supplement</th>
+              <th className="text-right">Cost (COGS)</th>
+              <th className="text-right">Stock</th>
+              <th className="text-right">Qty</th>
+              <th className="text-right">Patient price</th>
+              <th className="text-right">Fee (75 bps)</th>
+              <th className="text-right">Your margin</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-stone-100">
+          <tbody>
             {computed.map(({ item, result }) => (
               <tr key={item.id}>
-                <td className="px-4 py-2 font-medium text-stone-800">{item.name}</td>
-                <td className="px-4 py-2 text-right text-stone-500">
+                <td className="font-bold text-[var(--cerbo-navy)]">{item.name}</td>
+                <td className="text-right text-[var(--cerbo-muted)]">
                   {formatCents(item.wholesaleCents)}
                 </td>
-                <td className="px-4 py-2 text-right text-stone-500">{item.stock}</td>
-                <td className="px-4 py-2 text-right">
+                <td className="text-right text-[var(--cerbo-muted)]">{item.stock}</td>
+                <td className="text-right">
                   <input
                     type="number"
                     min={0}
                     value={lines[item.id].quantity}
                     onChange={(e) => setLine(item.id, { quantity: e.target.value })}
                     placeholder="0"
-                    className="w-16 rounded border border-stone-300 px-1 py-0.5 text-right"
+                    className="brand-input w-20 px-2 py-1 text-right"
                   />
                 </td>
-                <td className="px-4 py-2 text-right">
+                <td className="text-right">
                   <div className="inline-flex items-center gap-1">
-                    <span className="text-stone-400">$</span>
+                    <span className="text-[var(--cerbo-muted)]">$</span>
                     <input
                       value={lines[item.id].price}
                       onChange={(e) => setLine(item.id, { price: e.target.value })}
-                      className="w-20 rounded border border-stone-300 px-1 py-0.5 text-right"
+                      className="brand-input w-24 px-2 py-1 text-right"
                     />
                   </div>
                 </td>
                 {result.state === "ok" ? (
                   <>
-                    <td className="px-4 py-2 text-right text-stone-600">
+                    <td className="text-right text-[var(--cerbo-muted)]">
                       {formatCents(result.split.feeCents)}
                     </td>
-                    <td className="px-4 py-2 text-right font-medium text-emerald-700">
+                    <td className="text-right font-bold text-[#067647]">
                       {formatCents(result.split.marginCents)}
                     </td>
                   </>
                 ) : (
-                  <td colSpan={2} className="px-4 py-2 text-right text-xs text-red-600">
+                  <td colSpan={2} className="text-right text-sm font-semibold text-red-600">
                     {result.state === "invalid" ? result.message : ""}
                   </td>
                 )}
@@ -195,29 +205,35 @@ export function OrderBuilder({
       </div>
 
       {overStock.length > 0 && (
-        <p className="text-sm text-red-600">
+        <p className="error-panel px-4 py-3 text-sm font-semibold">
           Not enough stock for: {overStock.map((c) => c.item.name).join(", ")}
         </p>
       )}
-      {serverError && <p className="text-sm text-red-600">{serverError}</p>}
+      {serverError && (
+        <p className="error-panel px-4 py-3 text-sm font-semibold">{serverError}</p>
+      )}
 
-      <div className="flex items-center justify-between rounded-lg border border-stone-200 bg-white p-4">
-        <dl className="flex gap-8 text-sm">
+      <div className="brand-card flex flex-col gap-5 p-5 lg:flex-row lg:items-center lg:justify-between">
+        <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <dt className="text-stone-500">Patient pays</dt>
-            <dd className="text-lg font-semibold">{formatCents(totals.total)}</dd>
+            <dt className="label-copy">Patient pays</dt>
+            <dd className="metric-value">{formatCents(totals.total)}</dd>
           </div>
           <div>
-            <dt className="text-stone-500">COGS</dt>
-            <dd className="text-lg">{formatCents(totals.cogs)}</dd>
+            <dt className="label-copy">COGS</dt>
+            <dd className="text-xl font-bold text-[var(--cerbo-navy)]">
+              {formatCents(totals.cogs)}
+            </dd>
           </div>
           <div>
-            <dt className="text-stone-500">Platform fee</dt>
-            <dd className="text-lg">{formatCents(totals.fee)}</dd>
+            <dt className="label-copy">Platform fee</dt>
+            <dd className="text-xl font-bold text-[var(--cerbo-navy)]">
+              {formatCents(totals.fee)}
+            </dd>
           </div>
           <div>
-            <dt className="text-stone-500">Your margin</dt>
-            <dd className="text-lg font-semibold text-emerald-700">
+            <dt className="label-copy">Your margin</dt>
+            <dd className="text-xl font-bold text-[#067647]">
               {formatCents(totals.margin)}
             </dd>
           </div>
@@ -225,9 +241,10 @@ export function OrderBuilder({
         <button
           onClick={submit}
           disabled={!canSubmit}
-          className="rounded-md bg-emerald-700 px-5 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-stone-300"
+          className="btn-primary px-6 py-3 text-sm lg:min-w-[10rem]"
         >
-          {isPending ? "Creating…" : "Create order"}
+          <Send size={17} strokeWidth={2.4} aria-hidden="true" />
+          {isPending ? "Creating..." : "Create order"}
         </button>
       </div>
     </div>

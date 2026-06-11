@@ -109,16 +109,19 @@ model OrderLine {
 }
 
 /// Every payment attempt is recorded, including declines — part of the
-/// audit trail. At most one attempt per order ever SUCCEEDED (enforced in
-/// the payment transaction, which re-checks order status under lock).
+/// audit trail. Declines may repeat; a successful attempt sets
+/// `successfulOrderKey` to the order id. Because Postgres permits multiple
+/// NULL values in a unique column, this gives us the desired partial-unique
+/// behavior: many declines, at most one success per order.
 model PaymentAttempt {
-  id            String        @id @default(cuid())
-  orderId       String
-  amountCents   Int
-  status        PaymentStatus
-  cardLast4     String
-  failureReason String?
-  createdAt     DateTime      @default(now())
+  id                 String        @id @default(cuid())
+  orderId            String
+  amountCents        Int
+  status             PaymentStatus
+  cardLast4          String
+  failureReason      String?
+  successfulOrderKey String?       @unique
+  createdAt          DateTime      @default(now())
 
   order Order @relation(fields: [orderId], references: [id])
 

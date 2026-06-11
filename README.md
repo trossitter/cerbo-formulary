@@ -74,3 +74,35 @@ npm run test:watch  # interactive
 
 See `docs/TECHNICAL.md` for the full data model and money-handling decisions,
 and `docs/AI_USAGE.md` for the AI-usage write-up.
+
+## Future directions (out of scope for this slice)
+
+### Clinical co-pilot: Protocol suggestions
+
+The EHR already holds the patient's diagnoses, labs, and medication list. A natural
+next layer is a protocol suggestion engine that surfaces a recommended supplement
+order when the provider opens the order builder — pre-populated with items, quantities,
+and prices drawn from that provider's own ordering history and anonymized aggregate
+patterns across the platform.
+
+From the provider's perspective: open a new order, see "Thyroid Support protocol —
+3 items" pre-filled based on the patient's chart, confirm or adjust, done. The
+AI is doing ranked selection from the catalog against structured EHR data; it is
+not generating clinical knowledge from scratch, which keeps the failure mode bounded
+and the human firmly in the loop before anything reaches the patient.
+
+Commercially, protocols become a compounding asset: the more providers use the
+dispensary, the sharper the suggestions get, and a shareable protocol library
+becomes a reason to use Cerbo's dispensary specifically rather than an external
+storefront. The dependency is one LLM API key; the latency is hidden behind
+streaming on chart open.
+
+### Supplement-drug interaction checking
+
+Before an order is placed, flag potential interactions between the selected
+supplements and the patient's current medications. This is the safety-critical
+companion to protocol suggestions — the case where AI earns trust rather than
+just saves time. It requires a clinical drug-interaction database (e.g. NLM or
+a specialized API) in addition to an LLM; the model reasons over structured
+interaction data rather than recalling facts from training weights. A clinician
+confirms before the order is sent.

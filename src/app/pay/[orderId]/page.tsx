@@ -18,36 +18,40 @@ export default async function PayPage({
   if (!order) notFound();
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-stone-900">
-          Pay for your supplements
-        </h1>
-        <p className="text-sm text-stone-500">
+    <div className="mx-auto max-w-xl space-y-6">
+      <div className="space-y-3">
+        <p className="section-label">Secure patient checkout</p>
+        <h1 className="serif-heading page-title">Pay for your supplements</h1>
+        <p className="page-subtitle">
           Prescribed by {order.providerName} for {order.patientName}
         </p>
       </div>
 
-      <div className="rounded-lg border border-stone-200 bg-white p-4">
-        <ul className="divide-y divide-stone-100 text-sm">
+      <div className="brand-card p-5">
+        <ul className="divide-y divide-[var(--cerbo-soft-border)] text-sm">
           {order.lines.map((line) => (
             <li key={line.id} className="flex justify-between py-2">
-              <span>
-                {line.quantity}× {line.supplement.name}
+              <span className="font-medium text-[var(--cerbo-ink)]">
+                {line.quantity}x {line.supplement.name}
               </span>
-              <span>{formatCents(line.totalCents)}</span>
+              <span className="font-bold text-[var(--cerbo-navy)]">
+                {formatCents(line.totalCents)}
+              </span>
             </li>
           ))}
         </ul>
-        <div className="mt-2 flex justify-between border-t border-stone-200 pt-2 font-semibold">
+        <div className="mt-3 flex justify-between border-t border-[var(--cerbo-border)] pt-3 font-bold">
           <span>Total</span>
-          <span>{formatCents(order.totalCents)}</span>
+          <span className="text-xl text-[var(--cerbo-navy)]">
+            {formatCents(order.totalCents)}
+          </span>
         </div>
       </div>
 
       {order.status === "PAID" ? (
-        <div className="rounded-lg bg-emerald-50 p-4 text-sm text-emerald-800">
-          This order is paid — thank you! A receipt has been (pretend) emailed to you.
+        <div className="success-panel p-4 text-sm font-semibold">
+          Payment of {formatCents(order.totalCents)} succeeded - thank you! A
+          receipt has been (pretend) emailed to you.
         </div>
       ) : (
         <PayForm orderId={order.id} amountLabel={formatCents(order.totalCents)} />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check, Copy } from "lucide-react";
 
 export function CopyLinkButton({ path }: { path: string }) {
   const [copied, setCopied] = useState(false);
@@ -15,8 +16,13 @@ export function CopyLinkButton({ path }: { path: string }) {
   return (
     <button
       onClick={copy}
-      className="rounded-md border border-emerald-700 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
+      className="btn-secondary px-4 py-2 text-sm"
     >
+      {copied ? (
+        <Check size={16} strokeWidth={2.4} aria-hidden="true" />
+      ) : (
+        <Copy size={16} strokeWidth={2.4} aria-hidden="true" />
+      )}
       {copied ? "Copied!" : "Copy payment link"}
     </button>
   );

@@ -125,6 +125,7 @@ export async function payOrder(orderId: string, cardNumber: string): Promise<Pay
         amountCents: order.totalCents,
         status: "SUCCEEDED",
         cardLast4: charge.cardLast4,
+        successfulOrderKey: order.id,
       },
     });
 

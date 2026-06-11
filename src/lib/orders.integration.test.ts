@@ -113,6 +113,23 @@ describe("order → payment → ledger", () => {
     expect(after.payments.filter((p) => p.status === "SUCCEEDED")).toHaveLength(1);
   });
 
+  it("database rejects a second successful payment attempt for the same order", async () => {
+    const order = await makeOrder();
+    await payOrder(order.id, GOOD_CARD);
+
+    await expect(
+      prisma.paymentAttempt.create({
+        data: {
+          orderId: order.id,
+          amountCents: order.totalCents,
+          status: "SUCCEEDED",
+          cardLast4: "4242",
+          successfulOrderKey: order.id,
+        },
+      }),
+    ).rejects.toThrow();
+  });
+
   it("concurrent double-pay: exactly one succeeds", async () => {
     const order = await makeOrder();
     const [a, b] = await Promise.all([
