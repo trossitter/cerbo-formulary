@@ -9,7 +9,10 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:seed": "esbuild prisma/seed.ts --bundle --platform=node --format=esm --packages=external --outfile=.tmp/seed.mjs --log-level=warning && node .tmp/seed.mjs"
+    "postinstall": "prisma generate",
+    "db:seed": "esbuild prisma/seed.ts --bundle --platform=node --format=esm --packages=external --outfile=.tmp/seed.mjs --log-level=warning && node .tmp/seed.mjs",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
@@ -21,6 +24,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4.3.0",
     "@types/node": "^25.9.2",
     "@types/pg": "^8.20.0",
